@@ -227,3 +227,18 @@ control_arm_df %>%
 ```
 
 The arm value for the experiment group can be seen to increase from the start of the study to the end for all participants. The arm value for control group, on the other hand, can be seen to greatly fluctuate from beginning to end, but stays relatively stable.
+
+## PROBLEM 3 
+
+**Importing and cleaning data set** 
+
+```{r}
+
+set.seed(999)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
+
+```
+
