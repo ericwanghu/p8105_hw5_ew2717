@@ -137,3 +137,93 @@ results_df %>%
 
 ```
 
+## Problem 2 
+
+**Gathering and loading all files**
+
+```{r}
+
+file_name_list = list.files("data/p2 data/")
+
+file_name_list
+
+```
+
+```{r}
+
+long_study_df <- tibble(Files = file_name_list)
+
+long_study_df
+
+```
+
+**Creating iteration function**
+
+```{r}
+
+iteration = 
+  function(data_files) {
+  participant_data = 
+    read_csv(file = paste0("data/p2 data/", data_files)) %>% 
+    mutate(experiment_group = data_files)
+  }
+
+```
+
+**Merging all file data**
+
+```{r}
+
+merged_df = 
+  map_df(file_name_list, iteration) 
+
+```
+
+**Tidying data**
+
+```{r}
+
+control_arm_df <-
+  merged_df %>%
+  janitor::clean_names() %>%
+  
+  gather(key = week, 
+         value = arm_val, week_1:week_8) %>%
+  separate(experiment_group, into = c("experiment_group", "subject_id"), 
+           sep = "_") %>%
+  mutate(experiment_group = recode(experiment_group, 
+                    "con" = "Control",
+                    "exp" = "Experiment")) %>%
+  mutate(week = str_remove(week, "week_")) %>%
+  mutate(week = as.integer(week)) %>%
+  mutate(subject_id = str_remove(subject_id, ".csv")) %>% 
+  mutate(subject_id = as.integer(subject_id)) %>%
+  mutate(across(.cols = c(experiment_group, subject_id, week), as.factor)) %>%
+  select(experiment_group, subject_id, arm_val, week)
+
+```
+
+**Creating the Spaghetti Plot**
+
+```{r}
+
+control_arm_df %>%
+  ggplot(aes(x = week, 
+             y = arm_val, 
+             color = subject_id)) + 
+  geom_point(size = .5) + 
+  geom_line(aes(group = subject_id),  
+            alpha = .5) + 
+  facet_grid(~experiment_group) +
+  theme(axis.text.x = element_text(vjust = 0.5, 
+                                   hjust = 1)) +
+  labs(
+    title = "Observation data per subject over time",
+    x = "Week", 
+    y = "Observation data (Arm Value)"
+  ) + 
+  theme(legend.position = "right")
+
+```
+
+The arm value for the experiment group can be seen to increase from the start of the study to the end for all participants. The arm value for control group, on the other hand, can be seen to greatly fluctuate from beginning to end, but stays relatively stable.
